@@ -2,14 +2,14 @@
     <string name="app_name">WeChatTouch</string>
     <string name="action_settings">Settings</string>
 
-    <!-- String used for wechat login and logout   -->
+    <!-- String used for wechat login and logout -->
     <string name="wechat_login">微信登录</string>
 
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <!-- String used for SharedPreferences -->
+    <string name="userSharedPreferences">userSharedPreferences</string>
+
+    <!-- Strings used for activity_main -->
+    <string name="date_detail_placeholder">预定计划</string>
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
