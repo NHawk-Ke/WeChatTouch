@@ -1,29 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout  xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainFrameLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/login_background"
-    tools:context=".MainActivity">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/mainDrawer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <CalendarView
-            android:id="@+id/calendarView"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/date_detail_recyc"
-            android:layout_width="match_parent"
+            <Button
+                android:id="@+id/calendarMenuButton"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/calender_menu_before" />
+
+            <Button
+                android:id="@+id/calendarUserMenu"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_above="@id/calendarMenuButton"
+                android:layout_toStartOf="@id/calendarMenuButton"
+                android:layout_toLeftOf="@id/calendarMenuButton"
+                android:background="@android:drawable/sym_def_app_icon"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/calendarAddEvent"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_below="@id/calendarMenuButton"
+                android:layout_toStartOf="@id/calendarMenuButton"
+                android:layout_toLeftOf="@id/calendarMenuButton"
+                android:background="@android:drawable/alert_dark_frame"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <CalendarView
+                    android:id="@+id/calendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/dateDetailRecycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/date_detail_background" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/userDrawer"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:background="@drawable/date_detail_background" />
+            android:layout_gravity="end"
+            android:fitsSystemWindows="true"
+            app:headerLayout="@layout/user_header"
+            app:menu="@menu/menu_main">
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/wechatLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:text="@string/wechat_logout" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        </com.google.android.material.navigation.NavigationView>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+</FrameLayout>

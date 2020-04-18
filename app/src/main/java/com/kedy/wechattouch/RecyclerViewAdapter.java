@@ -66,9 +66,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            plan_icon = itemView.findViewById(R.id.plan_icon);
-            plan_description = itemView.findViewById(R.id.plan_description);
-            item = itemView.findViewById(R.id.date_detail_item);
+            plan_icon = itemView.findViewById(R.id.planIcon);
+            plan_description = itemView.findViewById(R.id.planDescription);
+            item = itemView.findViewById(R.id.dateDetailItem);
         }
     }
 }

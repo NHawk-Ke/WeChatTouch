@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/date_detail_item"
+    android:id="@+id/dateDetailItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/plan_icon"
+        android:id="@+id/planIcon"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginStart="30dp"
@@ -14,15 +14,14 @@
         app:srcCompat="@mipmap/ic_launcher" />
 
     <TextView
-        android:id="@+id/plan_description"
+        android:id="@+id/planDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_toEndOf="@id/plan_icon"
-        android:layout_toRightOf="@id/plan_icon"
-        android:text="TextView"
+        android:layout_toEndOf="@id/planIcon"
+        android:layout_toRightOf="@id/planIcon"
         android:textColor="@color/colorBlack"
         android:textSize="15sp" />
 </RelativeLayout>

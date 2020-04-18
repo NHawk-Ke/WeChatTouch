@@ -16,18 +16,12 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/wechat_login"
+        android:id="@+id/wechatLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@color/colorWeChatLogin"
         android:text="@string/wechat_login"
         app:layout_anchor="@+id/linearLayout"
         app:layout_anchorGravity="center" />
-
-    <Button
-        android:id="@+id/button_test"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Button" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
