@@ -75,7 +75,7 @@ public class MainActivity extends FragmentActivity {
             setContentView(R.layout.activity_main);
             init_calender();
 
-            final CalendarView calendar = findViewById(R.id.calendar);
+            final View calendar = findViewById(R.id.calendar);
             final Button userMenu = findViewById(R.id.calendarUserMenu);
             final Button eventButton = findViewById(R.id.calendarAddEvent);
             final Button calenderMenu = findViewById(R.id.calendarMenuButton);
@@ -86,14 +86,14 @@ public class MainActivity extends FragmentActivity {
             mMonth = sysCalendar.get(Calendar.MONTH) + 1;
             mDay = sysCalendar.get(Calendar.DAY_OF_MONTH);
             //日历选择事件
-            calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
-                @Override
-                public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
-                    mYear = year;
-                    mMonth = month + 1;
-                    mDay = dayOfMonth;
-                }
-            });
+//            calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+//                @Override
+//                public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+//                    mYear = year;
+//                    mMonth = month + 1;
+//                    mDay = dayOfMonth;
+//                }
+//            });
 
             //根据状态显示或隐藏用户和添加事件按钮
             calenderMenu.setOnClickListener(new View.OnClickListener() {

@@ -14,13 +14,18 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <com.kedy.wechattouch.calendarlibrary.CalendarView
+                android:id="@+id/calendar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
             <Button
                 android:id="@+id/calendarMenuButton"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
+                android:layout_below="@+id/calendar"
                 android:background="@drawable/calender_menu_before" />
 
             <Button
@@ -47,12 +52,8 @@
                 android:id="@+id/linearLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_below="@id/calendar"
                 android:orientation="vertical">
-
-                <CalendarView
-                    android:id="@+id/calendar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/dateDetailRecycler"

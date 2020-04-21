@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CalendarView">
+        <!--这三个颜色分别是月份、星期、日期，只是方便调试测量时使用，正式试用时可配置透明色-->
+        <attr name="mBgMonth" format="color" />
+        <attr name="mBgWeek" format="color" />
+        <attr name="mBgDay" format="color" />
+
+        <attr name="mTitleTextColor" format="color" />           <!--标题字体颜色-->
+        <attr name="mWeekTextColor" format="color" />            <!--星期字体颜色-->
+        <attr name="mDayTextColor" format="color" />             <!--日期字体颜色-->
+
+        <attr name="mTitleTextSize" format="dimension" />        <!--标题字体大小-->
+        <attr name="mWeekTextSize" format="dimension" />         <!--星期字体大小-->
+        <attr name="mDayTextSize" format="dimension" />          <!--日期字体大小-->
+
+        <attr name="mTitleArrowLeft" format="reference" />       <!--月份箭头-->
+        <attr name="mTitleArrowRight" format="reference" />      <!--月份箭头-->
+        <attr name="mTitleArrowSpace" format="dimension" />      <!--月份箭头横向间距-->
+
+        <attr name="mSelectedDayColor" format="color" />          <!--选中日期字体颜色-->
+        <attr name="mSelectedDayBg" format="color" />                 <!--选中日期背景-->
+        <attr name="mSelectedRadius" format="dimension" />         <!--选中日期背景半径-->
+        <attr name="mCurrentDayBg" format="color" />                <!--当天日期背景-->
+        <attr name="mCurrentDayDashPath" format="reference" />    <!--当天日期背景虚线数组-->
+        <attr name="mStrokeWidth" format="dimension" />           <!--画笔线条宽度-->
+
+        <attr name="mTitleSpace" format="dimension" />            <!--标题月份上下间隔-->
+        <attr name="mDaySpace" format="dimension" />             <!--日期行间距-->
+        <attr name="mTextSpac" format="dimension" />             <!--日期和任务次数字体上下间距-->
+    </declare-styleable>
+</resources>
