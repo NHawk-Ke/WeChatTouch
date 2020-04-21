@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CalendarView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+
+import com.kedy.wechattouch.calendarlibrary.CalendarView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -75,7 +76,7 @@ public class MainActivity extends FragmentActivity {
             setContentView(R.layout.activity_main);
             init_calender();
 
-            final View calendar = findViewById(R.id.calendar);
+            final CalendarView calendar = findViewById(R.id.calendar);
             final Button userMenu = findViewById(R.id.calendarUserMenu);
             final Button eventButton = findViewById(R.id.calendarAddEvent);
             final Button calenderMenu = findViewById(R.id.calendarMenuButton);
@@ -83,17 +84,17 @@ public class MainActivity extends FragmentActivity {
             //初始化时间
             Calendar sysCalendar = Calendar.getInstance();
             mYear = sysCalendar.get(Calendar.YEAR);
-            mMonth = sysCalendar.get(Calendar.MONTH) + 1;
+            mMonth = sysCalendar.get(Calendar.MONTH);
             mDay = sysCalendar.get(Calendar.DAY_OF_MONTH);
             //日历选择事件
-//            calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
-//                @Override
-//                public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
-//                    mYear = year;
-//                    mMonth = month + 1;
-//                    mDay = dayOfMonth;
-//                }
-//            });
+            calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+                @Override
+                public void onClickDay(int year, int month, int day) {
+                    mYear = year;
+                    mMonth = month;
+                    mDay = day;
+                }
+            });
 
             //根据状态显示或隐藏用户和添加事件按钮
             calenderMenu.setOnClickListener(new View.OnClickListener() {

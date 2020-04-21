@@ -18,10 +18,11 @@ public class CalendarUtils {
 
     //计算dip2px
     private float mScale;
-    private int maxHeightDp;
-    private int maxWidthDp;
     //一个统一的日历用来做运算
     private Calendar mCalendar;
+    private int mCurrentYear;
+    private int mCurrentMonth;
+    private int mCurrentDay;
     //缓存天数信息
     private HashMap<String, List<DayBox>> mCacheMonthData;
 
@@ -31,6 +32,9 @@ public class CalendarUtils {
     private CalendarUtils() {
         mCacheMonthData = new HashMap<>();
         mCalendar = Calendar.getInstance();
+        mCurrentYear = mCalendar.get(Calendar.YEAR);
+        mCurrentMonth = mCalendar.get(Calendar.MONTH);
+        mCurrentDay = mCalendar.get(Calendar.DAY_OF_MONTH);
     }
 
     static CalendarUtils getInstance() {
@@ -148,7 +152,11 @@ public class CalendarUtils {
      * 计算当前日期
      */
     int[] getCurrentDate() {
-        return new int[]{mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH), mCalendar.get(Calendar.DAY_OF_MONTH)};
+        return new int[]{mCurrentYear, mCurrentMonth, mCurrentDay};
+    }
+
+    boolean isToday(int [] date) {
+        return mCurrentYear == date[0] && mCurrentMonth == date[1] && mCurrentDay == date[2];
     }
 
     /***

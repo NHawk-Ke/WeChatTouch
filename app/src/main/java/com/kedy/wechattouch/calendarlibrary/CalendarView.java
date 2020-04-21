@@ -6,13 +6,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.graphics.PathEffect;
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -20,7 +19,7 @@ import android.widget.Scroller;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.constraintlayout.solver.widgets.WidgetContainer;
+import androidx.core.view.ViewCompat;
 
 import com.kedy.wechattouch.R;
 
@@ -54,16 +53,15 @@ public class CalendarView extends View {
     private int mDayTextColor;
     private int mDayTextSize;
     private int mDayHeight;
-    /** 任务图标的大小，设定为边长相等的正方形，所以在onMeasure的时候根据父件的宽窄来定义*/
+    /** 任务图标的大小*/
     private int mIconSize;
     /** 选中的日期的颜色*/
-    private int mSelectedMonth = 3;
-    private int mSelectedDay = 20;
+    private int mSelectedYear;
+    private int mSelectedMonth;
+    private int mSelectedDay;
     private int mSelectedDayColor;
     /** 选中背景*/
     private int mSelectedDayBg, mCurrentDayBg;
-    private int mSelectedRadius;
-    private float[] mCurrentDayDashPath;
     /** 线条粗细*/
     private int mStrokeWidth;
 
@@ -89,7 +87,6 @@ public class CalendarView extends View {
     private List<DayBox> mNextMonthDayBoxes;
     private List<DayBox> mLastMonthDayBoxes;
 
-    private int mCurrentDay;
     private int mCurrentMonth;
     private int mCurrentYear;
 
@@ -98,15 +95,19 @@ public class CalendarView extends View {
     private Paint mTextPaint;
 
     private int mTouchSlop;
+    private float mTouchDownX;
+    private float mTouchDownY;
     private float mOffsetX;
-    private float mOffsetY;
     private Type mScrollToType;
 
     private Scroller mContentScroller;
     private VelocityTracker mVelocityTracker;
-    boolean mIsDrawing;
+    private boolean mIsDrawing;
+    private boolean mIsClick;
+    private boolean mIsScrolling;
 
     private Context mContext;
+    private OnDateChangeListener mOnClickDayListener;
 
     enum Type {
         /**
@@ -114,21 +115,7 @@ public class CalendarView extends View {
          */
         LAST,
         NEXT,
-        /**
-         * 上一年，下一年
-         */
-        LAST_YEAR,
-        NEXT_YEAR,
         NONE
-    }
-
-    enum ScrollOrientation {
-        /**
-         * 滑动方向
-         */
-        Vertical,
-        Horizontal,
-        None
     }
 
     public CalendarView(Context context) {
@@ -156,10 +143,6 @@ public class CalendarView extends View {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         //宽度 = 填充父窗体
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);   //获取宽的尺寸
-        //每行高度 += 图标高度（每一列最多3个图标）
-//        mIconSize = widthSize / CalendarUtils.NUM_COL / 3;
-        mIconSize = 20;
-        mRowHeight += mIconSize;
         //高度 = 标题高度 + 星期高度 + 日期行数*每行高度
         int height = mTitleHeight + mWeekHeight + (CalendarUtils.NUM_ROW * mRowHeight);
         Log.v(TAG, "标题高度："+mTitleHeight+" 星期高度："+mWeekHeight+" 每行高度："+mRowHeight+
@@ -179,6 +162,43 @@ public class CalendarView extends View {
         drawAllDay(canvas);
         drawOuterLine(canvas);
         mIsDrawing = false;
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if (mContentScroller.computeScrollOffset()) {
+            mOffsetX = mContentScroller.getCurrX();
+            ViewCompat.postInvalidateOnAnimation(this);
+        }else if (mIsScrolling) {
+            mIsScrolling = false;
+            mOffsetX = 0;
+            Log.d(TAG, "compute scroll: mScrollType = " + mScrollToType);
+            computeMonthDayBoxes(mCurrentYear, mCurrentMonth, mScrollToType);
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (mIsScrolling || mIsDrawing) {
+            Log.d(TAG, "onTouchEvent: cannot touch");
+            return false;
+        }
+        mVelocityTracker.addMovement(event);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                handleDown(event);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                handleMove(event);
+                break;
+            case MotionEvent.ACTION_UP:
+                handleUp(event);
+                break;
+            default:
+                Log.d(TAG, "onTouchEvent: unknown event Action = " + event.getAction());
+        }
+        return true;
     }
 
     private void init(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
@@ -203,7 +223,9 @@ public class CalendarView extends View {
         int [] date = mCalendarUtils.getCurrentDate();
         mCurrentYear = date[0];
         mCurrentMonth = date[1];
-        mCurrentDay = date[2];
+        mSelectedYear = date[0];
+        mSelectedMonth = date[1];
+        mSelectedDay = date[2];
         mTitleText = mCurrentYear + "年" + mCurrentMonth + "月";
     }
 
@@ -228,24 +250,13 @@ public class CalendarView extends View {
         mTitleArrowSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTitleArrowSpace, 20));
 
         mSelectedDayColor = a.getColor(R.styleable.CalendarView_mSelectedDayColor, Color.BLACK);
-        mSelectedDayBg =  a.getColor(R.styleable.CalendarView_mSelectedDayBg, Color.YELLOW);
-        mSelectedRadius = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mSelectedRadius, 15));
-        mCurrentDayBg = a.getColor(R.styleable.CalendarView_mCurrentDayBg, Color.GRAY);
-        try {
-            int dashPathId = a.getResourceId(R.styleable.CalendarView_mCurrentDayDashPath, R.array.calendar_currentDay_bg_DashPath);
-            int[] array = getResources().getIntArray(dashPathId);
-            mCurrentDayDashPath = new float[array.length];
-            for(int i = 0; i < array.length; i++){
-                mCurrentDayDashPath[i] = array[i];
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-            mCurrentDayDashPath = new float[]{2, 3, 2, 3};
-        }
+        mSelectedDayBg =  a.getColor(R.styleable.CalendarView_mSelectedDayBg, getResources().getColor(R.color.colorSelectedDay));
+        mIconSize = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mIconSize, (float) mMaxWidthDp / 21));
+        mCurrentDayBg = a.getColor(R.styleable.CalendarView_mCurrentDayBg, Color.YELLOW);
         mStrokeWidth = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mStrokeWidth, 1));
 
         mTitleSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTitleSpace, 5));
-        mDaySpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDaySpace, 10));
+        mDaySpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDaySpace, 2));
         mTextSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTextSpac, 0));
         a.recycle();  //注意回收
     }
@@ -277,8 +288,8 @@ public class CalendarView extends View {
         //日期高度
         mTextPaint.setTextSize(mDayTextSize);
         mDayHeight = (int) getFontHeight(mTextPaint);
-        //每行高度 = 行间距 + 日期字体高度 + 字间距 + 图标高度（暂无，需要在onMeasure的时候构建）
-        mRowHeight = mDaySpace + mDayHeight + mTextSpace;
+        //每行高度 = 行间距 + 日期字体高度 + 字间距 + 图标高度
+        mRowHeight = mDaySpace + mDayHeight + mTextSpace + mIconSize;
     }
 
     private void initRectF() {
@@ -322,8 +333,8 @@ public class CalendarView extends View {
         int titleStart = (viewWidth - (int) getFontlength(mTextPaint, mTitleText)) / 2;
         mTitleTextRectF.set(titleStart, 0,
                 titleStart + (int) getFontlength(mTextPaint, mTitleText), mTitleHeight);
-        mNextRectF.set(mTitleTextRectF.right, 0, mTitleTextRectF.right + mCalendarUtils.dip2px(mTitleArrowSpace), mTitleHeight);
-        mLastRectF.set(mTitleTextRectF.left - mCalendarUtils.dip2px(mTitleArrowSpace), 0, mTitleTextRectF.left, mTitleHeight);
+        mNextRectF.set(mTitleTextRectF.right + mTitleArrowSpace, 0, mTitleTextRectF.right + mTitleArrowSpace, mTitleHeight);
+        mLastRectF.set(mTitleTextRectF.left - mTitleArrowSpace, 0, mTitleTextRectF.left - mTitleArrowSpace, mTitleHeight);
         mTitleRectF.set(0, 0, viewWidth, mTitleHeight);
 
         //week 参数
@@ -351,6 +362,13 @@ public class CalendarView extends View {
         computeMonthDayBoxes(mCurrentYear, mCurrentMonth, Type.NONE);
     }
 
+    /***
+     * 根据年月和即将发生的动作计算出完成动作后的新的当前年月
+     *
+     * @param year 当前年份
+     * @param month 当前月份
+     * @param updateType 向左滑或者向右滑
+     */
     private void computeMonthDayBoxes(int year, int month, Type updateType) {
         int currentYear = year;
         int currentMonth = month;
@@ -359,12 +377,16 @@ public class CalendarView extends View {
                 if (month == 0){
                     currentYear = year - 1;
                     currentMonth = 11;
+                }else {
+                    currentMonth -= 1;
                 }
                 break;
             case NEXT:
                 if (month == 11) {
                     currentYear = year + 1;
                     currentMonth = 0;
+                }else {
+                    currentMonth += 1;
                 }
                 break;
         }
@@ -386,8 +408,11 @@ public class CalendarView extends View {
 
         for (int index = 0; index < CalendarUtils.NUM_CELL; index++) {
             mCurrentMonthDayBoxes.get(index).setRectF(mCurrentMonthDayRectFs.get(index));
+            mCurrentMonthDayBoxes.get(index).setIconRectFs(mIconSize, mDayHeight, mDaySpace, mTextSpace);
             mNextMonthDayBoxes.get(index).setRectF(mNextMonthDayRectFs.get(index));
+            mNextMonthDayBoxes.get(index).setIconRectFs(mIconSize, mDayHeight, mDaySpace, mTextSpace);
             mLastMonthDayBoxes.get(index).setRectF(mLastMonthDayRectFs.get(index));
+            mLastMonthDayBoxes.get(index).setIconRectFs(mIconSize, mDayHeight, mDaySpace, mTextSpace);
         }
         Log.d(TAG, "updateMonth: mTitleText = " + mTitleText);
     }
@@ -396,8 +421,10 @@ public class CalendarView extends View {
      * 背景
      */
     private void drawBackground(Canvas canvas) {
-        mbgPaint.setColor(Color.TRANSPARENT);
-        canvas.drawRect(mViewRectF, mbgPaint);
+//        mbgPaint.setColor(Color.TRANSPARENT);
+//        canvas.drawRect(mViewRectF, mbgPaint);
+//        canvas.setBitmap();
+        setBackgroundResource(R.drawable.calendar_background);
     }
 
     /**
@@ -420,6 +447,8 @@ public class CalendarView extends View {
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), mTitleArrowLeft);
         int arrowHeight = bitmap.getHeight();
         int arrowWidth = bitmap.getWidth();
+        mLastRectF.left = mLastRectF.right - arrowWidth;
+        mNextRectF.right = mNextRectF.left + arrowWidth;
         //float left, float top
         int arrowLStart = (int) mTitleTextRectF.left - mTitleArrowSpace - arrowWidth;
         canvas.drawBitmap(bitmap, arrowLStart , (mTitleHeight - arrowHeight) / 2f, new Paint());
@@ -432,16 +461,16 @@ public class CalendarView extends View {
      * 星期
      */
     private void drawWeek(Canvas canvas) {
-        String[] WEEK_STR = new String[]{"Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"};
+        String[] WEEK_STR = new String[]{"日", "一", "二", "三", "四", "五", "六"};
         mTextPaint.setColor(mWeekTextColor);
         for (int index = 0; index < CalendarUtils.NUM_COL; index++) {
             RectF rectF = mWeekRectFs.get(index);
 
             mbgPaint.setColor(mWeekBg);
-            canvas.drawRect(rectF, mStrokePaint);
+            canvas.drawRect(rectF, mbgPaint);
 
-            mStrokePaint.setColor(Color.RED);
-            canvas.drawRect(rectF, mStrokePaint);
+//            mStrokePaint.setColor(Color.RED);
+//            canvas.drawRect(rectF, mStrokePaint);
 
             mTextPaint.setTextSize(mWeekTextSize);
             canvas.drawText(WEEK_STR[index], rectF.centerX(),
@@ -455,7 +484,7 @@ public class CalendarView extends View {
     private void drawAllDay(Canvas canvas) {
         canvas.save();
         canvas.clipRect(0, mTitleHeight, mViewRectF.width(), mViewRectF.height());
-        canvas.translate(mOffsetX, mOffsetY);
+        canvas.translate(mOffsetX, 0);
         for (int index = 0; index < CalendarUtils.NUM_CELL; index++) {
             drawDay(canvas, mCurrentMonthDayBoxes.get(index));
             drawDay(canvas, mNextMonthDayBoxes.get(index));
@@ -468,30 +497,39 @@ public class CalendarView extends View {
         mbgPaint.setColor(mDayBg);
         canvas.drawRect(dayBox.getRectF(), mbgPaint);
 
-        mStrokePaint.setColor(Color.GREEN);
+        mStrokePaint.setColor(Color.LTGRAY);
         canvas.drawRect(dayBox.getRectF(), mStrokePaint);
 
         mTextPaint.setColor(dayBox.isCurrentMonth() ? mDayTextColor : Color.GRAY);
         mTextPaint.setTextSize(mDayTextSize);
         //画当前日期
-        if (dayBox.isCurrentMonth() && dayBox.getDay() == mCurrentDay) {
-            mStrokePaint.setColor(Color.DKGRAY);
-            PathEffect effect = new DashPathEffect(mCurrentDayDashPath, 1);
-            mStrokePaint.setPathEffect(effect);   //设置画笔曲线间隔
-            //绘制空心圆背景
-            canvas.drawCircle(dayBox.getRectF().centerX(),
-                    dayBox.getRectF().top + mDaySpace + (getFontLeading(mTextPaint) / 2f),
-                    mSelectedRadius - mStrokeWidth, mStrokePaint);
-            mStrokePaint.setPathEffect(null);
+        if (mCalendarUtils.isToday(dayBox.getDate())) {
+            mbgPaint.setColor(mCurrentDayBg);
+            mbgPaint.setAlpha(80);
+            canvas.drawRect(dayBox.getRectF(), mbgPaint);
+            mbgPaint.setAlpha(100);
+
+
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), mTitleArrowLeft);
+            List<RectF> rectF = dayBox.getDoubleIconRectFs();
+            canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
+            canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
+
         }
         //画选中日期
-        if (dayBox.getMonth() == mSelectedMonth && dayBox.getDay() == mSelectedDay) {
+        else if (dayBox.getYear() == mSelectedYear && dayBox.getMonth() == mSelectedMonth && dayBox.getDay() == mSelectedDay) {
             mTextPaint.setColor(mSelectedDayColor);
-            mbgPaint.setColor(Color.YELLOW);
-            //绘制橙色圆背景，参数一是中心点的x轴，参数二是中心点的y轴，参数三是半径，参数四是paint对象；
-            canvas.drawCircle(dayBox.getRectF().centerX(),
-                    dayBox.getRectF().top + mDaySpace + (getFontLeading(mTextPaint) / 2f),
-                    mSelectedRadius, mbgPaint);
+            mbgPaint.setColor(mSelectedDayBg);
+            mbgPaint.setAlpha(80);
+            canvas.drawRect(dayBox.getRectF(), mbgPaint);
+            mbgPaint.setAlpha(100);
+
+
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), mTitleArrowLeft);
+            List<RectF> rectF = dayBox.getTripleIconRectFs();
+            canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
+            canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
+            canvas.drawBitmap(bitmap, null, rectF.get(2), new Paint());
         }
         canvas.drawText(String.valueOf(dayBox.getDay() + 1),
                 dayBox.getRectF().centerX(),
@@ -502,8 +540,98 @@ public class CalendarView extends View {
      * 外围线
      */
     private void drawOuterLine(Canvas canvas) {
-        mStrokePaint.setColor(Color.BLUE);
-        canvas.drawRect(mViewRectF, mStrokePaint);
+//        mStrokePaint.setColor(Color.BLUE);
+//        canvas.drawRect(mViewRectF, mStrokePaint);
+    }
+
+    private void handleDown(MotionEvent event) {
+        mTouchDownX = event.getX();
+        mTouchDownY = event.getY();
+        mIsClick = true;
+    }
+
+    private void handleMove(MotionEvent event) {
+        mOffsetX = event.getX() - mTouchDownX;
+
+        //设置最大单次滑动距离
+        if (Math.abs(mOffsetX) >= mViewRectF.width()) {
+            mOffsetX = mOffsetX > 0 ? mViewRectF.width() : -mViewRectF.width();
+        }
+
+        //判断是否为滑动
+        if (Math.abs(mOffsetX) > mTouchSlop) {
+            mIsClick = false;
+        }
+
+        if (mIsScrolling || !mDayContentRectF.contains(mTouchDownX, mTouchDownY)) {
+            return;
+        }
+
+        ViewCompat.postInvalidateOnAnimation(this);
+    }
+
+    private void handleUp(MotionEvent event) {
+        if (mIsClick) {
+            mOffsetX = 0;
+            if (mNextRectF.contains(mTouchDownX, mTouchDownY)) {
+                startScrollOnClick(Type.NEXT);
+            } else if (mLastRectF.contains(mTouchDownX, mTouchDownY)) {
+                startScrollOnClick(Type.LAST);
+            } else if (mDayContentRectF.contains(mTouchDownX, mTouchDownY)) {
+                if (mOnClickDayListener != null) {
+                    for (DayBox dayBox : mCurrentMonthDayBoxes) {
+                        if (dayBox.isCurrentMonth() && dayBox.isContains(mTouchDownX, mTouchDownY)) {
+                            mSelectedYear = dayBox.getYear();
+                            mSelectedMonth = dayBox.getMonth();
+                            mSelectedDay = dayBox.getDay();
+                            mOnClickDayListener.onClickDay(mSelectedYear, mSelectedMonth, mSelectedDay);
+                            ViewCompat.postInvalidateOnAnimation(this);
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (mDayContentRectF.contains(mTouchDownX, mTouchDownY)) {
+            startScroll(event);
+        }
+        mIsClick = false;
+    }
+
+    private void startScrollOnClick(Type type) {
+        mScrollToType = type;
+        int dx = (int) mViewRectF.width();
+        if (type == Type.NEXT) {
+            dx = -dx;
+        }
+        mIsScrolling = true;
+        mContentScroller.startScroll(0, 0, dx, 0, 500);
+        ViewCompat.postInvalidateOnAnimation(this);
+    }
+
+    private void startScroll(MotionEvent event) {
+        mIsScrolling = true;
+        mVelocityTracker.computeCurrentVelocity(1000);
+        int dx = (int) -mOffsetX;
+        float viewWidth = mViewRectF.width();
+        mScrollToType = Type.NONE;
+        if (mVelocityTracker.getXVelocity() < -200 || mOffsetX < -viewWidth * 0.3) {
+            dx = (int) -(viewWidth + mOffsetX);
+            mScrollToType = Type.NEXT;
+        } else if (mVelocityTracker.getXVelocity() > 200 || mOffsetX > viewWidth * 0.3) {
+            dx = (int) (viewWidth - mOffsetX);
+            mScrollToType = Type.LAST;
+        }
+        mContentScroller.startScroll((int) mOffsetX, 0, dx, 0, 500);
+        ViewCompat.postInvalidateOnAnimation(this);
+        mVelocityTracker.clear();
+    }
+
+    public interface OnDateChangeListener {
+        void onClickDay(int year, int month, int day);
+    }
+
+    public void setOnDateChangeListener(OnDateChangeListener listener) {
+        mOnClickDayListener = listener;
     }
 
     /**
