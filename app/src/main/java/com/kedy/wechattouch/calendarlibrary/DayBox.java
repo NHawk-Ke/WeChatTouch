@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DayBox implements Serializable {
+class DayBox implements Serializable {
     private RectF mRectF;
     private RectF mSingleIconRectF;
     private List<RectF> mDoubleIconRectFs;
@@ -14,7 +14,6 @@ public class DayBox implements Serializable {
     private int mYear;
     private int mMonth;
     private int mDay;
-    private int mTextColor;
     private boolean mIsCurrentMonth;
 
     int getYear() {
@@ -73,7 +72,7 @@ public class DayBox implements Serializable {
         int iconTop = (int) mRectF.top + textHeight + daySpace + textSpace;
         mSingleIconRectF = new RectF(
                 mRectF.centerX() - iconSize / 2f, iconTop,
-                mRectF.centerX() - iconSize / 2f, mRectF.bottom
+                mRectF.centerX() + iconSize / 2f, mRectF.bottom
         );
 
         mDoubleIconRectFs = new ArrayList<>(2);
@@ -101,20 +100,16 @@ public class DayBox implements Serializable {
         ));
     }
 
-    public int getTextColor() {
-        return mTextColor;
-    }
-
-    public void setTextColor(int textColor) {
-        mTextColor = textColor;
-    }
-
     boolean isContains(float x, float y) {
         return mRectF.contains(x, y);
     }
 
     int[] getDate() {
         return new int[]{mYear, mMonth, mDay};
+    }
+
+    String getDateStr() {
+        return mYear + "-" + mMonth + "-" + mDay;
     }
 
 }

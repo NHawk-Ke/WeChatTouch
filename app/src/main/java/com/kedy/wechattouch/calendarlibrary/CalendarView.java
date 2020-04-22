@@ -1,5 +1,6 @@
 package com.kedy.wechattouch.calendarlibrary;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -21,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.view.ViewCompat;
 
+import com.kedy.wechattouch.DatabaseHelper;
 import com.kedy.wechattouch.R;
 
 import java.util.ArrayList;
@@ -107,6 +109,7 @@ public class CalendarView extends View {
     private boolean mIsScrolling;
 
     private Context mContext;
+    private DatabaseHelper mDatabaseHelper;
     private OnDateChangeListener mOnClickDayListener;
 
     enum Type {
@@ -145,8 +148,6 @@ public class CalendarView extends View {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);   //获取宽的尺寸
         //高度 = 标题高度 + 星期高度 + 日期行数*每行高度
         int height = mTitleHeight + mWeekHeight + (CalendarUtils.NUM_ROW * mRowHeight);
-        Log.v(TAG, "标题高度："+mTitleHeight+" 星期高度："+mWeekHeight+" 每行高度："+mRowHeight+
-                "  \n控件高度："+height);
         computeRectF(widthSize, height);
         setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec), height);
     }
@@ -173,11 +174,11 @@ public class CalendarView extends View {
         }else if (mIsScrolling) {
             mIsScrolling = false;
             mOffsetX = 0;
-            Log.d(TAG, "compute scroll: mScrollType = " + mScrollToType);
             computeMonthDayBoxes(mCurrentYear, mCurrentMonth, mScrollToType);
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mIsScrolling || mIsDrawing) {
@@ -203,6 +204,7 @@ public class CalendarView extends View {
 
     private void init(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         mContext = context;
+        mDatabaseHelper = new DatabaseHelper(context);
         mCalendarUtils = CalendarUtils.getInstance();
         int[] maxDp = mCalendarUtils.setScale(context.getResources().getDisplayMetrics());
         mMaxWidthDp = maxDp[0];
@@ -322,14 +324,12 @@ public class CalendarView extends View {
     }
 
     private void computeRectF(int viewWidth, int viewHeight) {
-        Log.d(TAG, "总宽度: " + viewWidth + " 总高度: " + viewHeight);
         mViewRectF.set(mStrokeWidth, mStrokeWidth,
                 viewWidth - mStrokeWidth, viewHeight - mStrokeWidth);
         int itemWidth = viewWidth / CalendarUtils.NUM_COL;
 
         //title 参数
         mTextPaint.setTextSize(mTitleTextSize);
-        Log.d(TAG, "标题长度: " + getFontlength(mTextPaint, mTitleText));
         int titleStart = (viewWidth - (int) getFontlength(mTextPaint, mTitleText)) / 2;
         mTitleTextRectF.set(titleStart, 0,
                 titleStart + (int) getFontlength(mTextPaint, mTitleText), mTitleHeight);
@@ -414,7 +414,6 @@ public class CalendarView extends View {
             mLastMonthDayBoxes.get(index).setRectF(mLastMonthDayRectFs.get(index));
             mLastMonthDayBoxes.get(index).setIconRectFs(mIconSize, mDayHeight, mDaySpace, mTextSpace);
         }
-        Log.d(TAG, "updateMonth: mTitleText = " + mTitleText);
     }
 
     /**
@@ -436,7 +435,6 @@ public class CalendarView extends View {
 
         mTextPaint.setColor(mTitleTextColor);
         mTextPaint.setTextSize(mTitleTextSize);
-        Log.d(TAG, "titleText Coordinate: " + mTitleTextRectF.left + " " + mTitleTextRectF.top + " " + mTitleTextRectF.right + " " + mTitleTextRectF.bottom);
         canvas.drawText(mTitleText, mTitleTextRectF.centerX(), mTitleSpace + getFontLeading(mTextPaint), mTextPaint);
     }
 
@@ -508,13 +506,6 @@ public class CalendarView extends View {
             mbgPaint.setAlpha(80);
             canvas.drawRect(dayBox.getRectF(), mbgPaint);
             mbgPaint.setAlpha(100);
-
-
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_birthday);
-            List<RectF> rectF = dayBox.getDoubleIconRectFs();
-            canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
-            canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
-
         }
         //画选中日期
         else if (dayBox.getYear() == mSelectedYear && dayBox.getMonth() == mSelectedMonth && dayBox.getDay() == mSelectedDay) {
@@ -523,14 +514,31 @@ public class CalendarView extends View {
             mbgPaint.setAlpha(80);
             canvas.drawRect(dayBox.getRectF(), mbgPaint);
             mbgPaint.setAlpha(100);
+        }
 
-
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_shopping);
+        //画图标
+        int[] iconIDs = mDatabaseHelper.getIcons(dayBox.getDateStr());
+        if (iconIDs.length == 3) {
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[0]);
             List<RectF> rectF = dayBox.getTripleIconRectFs();
             canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
+            bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[1]);
             canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
+            bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[2]);
             canvas.drawBitmap(bitmap, null, rectF.get(2), new Paint());
+        }else if (iconIDs.length == 2) {
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[0]);
+            List<RectF> rectF = dayBox.getDoubleIconRectFs();
+            canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
+            bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[1]);
+            canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
+        }else if (iconIDs.length == 1) {
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), iconIDs[0]);
+            RectF rectF = dayBox.getSingleIconRectF();
+            canvas.drawBitmap(bitmap, null, rectF, new Paint());
         }
+
+        //画日期
         canvas.drawText(String.valueOf(dayBox.getDay() + 1),
                 dayBox.getRectF().centerX(),
                 dayBox.getRectF().top + mDaySpace + getFontLeading(mTextPaint), mTextPaint);
@@ -592,7 +600,7 @@ public class CalendarView extends View {
                 }
             }
         } else if (mDayContentRectF.contains(mTouchDownX, mTouchDownY)) {
-            startScroll(event);
+            startScroll();
         }
         mIsClick = false;
     }
@@ -608,7 +616,7 @@ public class CalendarView extends View {
         ViewCompat.postInvalidateOnAnimation(this);
     }
 
-    private void startScroll(MotionEvent event) {
+    private void startScroll() {
         mIsScrolling = true;
         mVelocityTracker.computeCurrentVelocity(1000);
         int dx = (int) -mOffsetX;

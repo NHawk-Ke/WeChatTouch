@@ -19,4 +19,32 @@
     <string name="plan_time">提醒时间</string>
     <string name="plan_description">计划详情</string>
     <string name="plan_create">创建计划</string>
+
+    <!-- String used for icons -->
+    <string name="ic_alarm">闹钟</string>
+    <string name="ic_badminton">羽毛球</string>
+    <string name="ic_bank">银行</string>
+    <string name="ic_barber">理发馆</string>
+    <string name="ic_basketball">篮球</string>
+    <string name="ic_beer">啤酒</string>
+    <string name="ic_bicycle">自行车</string>
+    <string name="ic_birthday">生日</string>
+    <string name="ic_bowling">保龄球</string>
+    <string name="ic_brainstorm">头脑风暴</string>
+    <string name="ic_car">车</string>
+    <string name="ic_cd">CD</string>
+    <string name="ic_cloth">衣服</string>
+    <string name="ic_game">游戏</string>
+    <string name="ic_gift">礼物</string>
+    <string name="ic_gym">健身房</string>
+    <string name="ic_hospital">医院</string>
+    <string name="ic_hotpot">火锅</string>
+    <string name="ic_id">ID</string>
+    <string name="ic_key">钥匙</string>
+    <string name="ic_keyboard">键盘</string>
+    <string name="ic_knife">刀</string>
+    <string name="ic_ktv">KTV</string>
+    <string name="ic_library">图书馆</string>
+    <string name="ic_meeting">会议</string>
+    <string name="ic_money">钱</string>
 </resources>

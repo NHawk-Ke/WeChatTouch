@@ -1,7 +1,6 @@
 package com.kedy.wechattouch.calendarlibrary;
 
 import android.util.DisplayMetrics;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -113,9 +112,7 @@ public class CalendarUtils {
      */
     private int getFirstDayOfMonth(int year, int month) {
         mCalendar.set(year, month, 0);
-        int result = mCalendar.get(Calendar.DAY_OF_WEEK);
-        Log.d(TAG, "first day of " + year + "-" + month + " is : " + result);
-        return result;
+        return mCalendar.get(Calendar.DAY_OF_WEEK);
     }
 
     /***

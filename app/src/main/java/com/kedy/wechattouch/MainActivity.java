@@ -32,11 +32,21 @@ public class MainActivity extends FragmentActivity {
     // Used for store user information
     private SharedPreferences mUserPreferences;
 
+    // Global Application
+    private WeChatTouchApplication mApplication;
+
     // VARS
     private Boolean mCalendarMenuState = false;
     private Integer mYear, mMonth, mDay;
     private ArrayList<Integer> mPlanIcons = new ArrayList<>();
     private ArrayList<String> mPlanDescriptions = new ArrayList<>();
+
+    // Widgets
+
+    private CalendarView mCalendar;
+    private Button mUserMenu;
+    private Button mEventButton;
+    private Button mCalenderMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +54,7 @@ public class MainActivity extends FragmentActivity {
         Log.d(TAG, "on Create: started");
         mUserPreferences = getSharedPreferences("userSharedPreferences", MODE_PRIVATE);
         mDatabaseHelper = new DatabaseHelper(this);
+        mApplication = (WeChatTouchApplication) this.getApplication();
 
         //如果用户还没有登录
         if (!mUserPreferences.getString("unionid", "").equals("")) {
@@ -76,10 +87,10 @@ public class MainActivity extends FragmentActivity {
             setContentView(R.layout.activity_main);
             init_calender();
 
-            final CalendarView calendar = findViewById(R.id.calendar);
-            final Button userMenu = findViewById(R.id.calendarUserMenu);
-            final Button eventButton = findViewById(R.id.calendarAddEvent);
-            final Button calenderMenu = findViewById(R.id.calendarMenuButton);
+            mCalendar = findViewById(R.id.calendar);
+            mUserMenu = findViewById(R.id.calendarUserMenu);
+            mEventButton = findViewById(R.id.calendarAddEvent);
+            mCalenderMenu = findViewById(R.id.calendarMenuButton);
 
             //初始化时间
             Calendar sysCalendar = Calendar.getInstance();
@@ -87,7 +98,7 @@ public class MainActivity extends FragmentActivity {
             mMonth = sysCalendar.get(Calendar.MONTH);
             mDay = sysCalendar.get(Calendar.DAY_OF_MONTH);
             //日历选择事件
-            calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            mCalendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
                 @Override
                 public void onClickDay(int year, int month, int day) {
                     mYear = year;
@@ -97,25 +108,25 @@ public class MainActivity extends FragmentActivity {
             });
 
             //根据状态显示或隐藏用户和添加事件按钮
-            calenderMenu.setOnClickListener(new View.OnClickListener() {
+            mCalenderMenu.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (mCalendarMenuState) {
-                        calenderMenu.setBackgroundResource(R.drawable.calender_menu_before);
-                        userMenu.setVisibility(View.GONE);
-                        eventButton.setVisibility(View.GONE);
+                        mCalenderMenu.setBackgroundResource(R.drawable.calender_menu_before);
+                        mUserMenu.setVisibility(View.GONE);
+                        mEventButton.setVisibility(View.GONE);
                         mCalendarMenuState = false;
                     } else {
-                        calenderMenu.setBackgroundResource(R.drawable.calender_menu_after);
-                        userMenu.setVisibility(View.VISIBLE);
-                        eventButton.setVisibility(View.VISIBLE);
+                        mCalenderMenu.setBackgroundResource(R.drawable.calender_menu_after);
+                        mUserMenu.setVisibility(View.VISIBLE);
+                        mEventButton.setVisibility(View.VISIBLE);
                         mCalendarMenuState = true;
                     }
                 }
             });
 
             //呼出用户界面
-            userMenu.setOnClickListener(new View.OnClickListener() {
+            mUserMenu.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     DrawerLayout mainDrawer = findViewById(R.id.mainDrawer);
@@ -124,7 +135,7 @@ public class MainActivity extends FragmentActivity {
             });
 
             //添加事件
-            eventButton.setOnClickListener(new View.OnClickListener() {
+            mEventButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(MainActivity.this, AddPlanPopup.class);
@@ -147,6 +158,9 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (mApplication.hasNewPlan()) {
+            mCalendar.invalidate();
+        }
         Log.d(TAG, "on resume start");
     }
 
