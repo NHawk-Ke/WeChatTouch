@@ -510,7 +510,7 @@ public class CalendarView extends View {
             mbgPaint.setAlpha(100);
 
 
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), mTitleArrowLeft);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_birthday);
             List<RectF> rectF = dayBox.getDoubleIconRectFs();
             canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
             canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());
@@ -525,7 +525,7 @@ public class CalendarView extends View {
             mbgPaint.setAlpha(100);
 
 
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), mTitleArrowLeft);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_shopping);
             List<RectF> rectF = dayBox.getTripleIconRectFs();
             canvas.drawBitmap(bitmap, null, rectF.get(0), new Paint());
             canvas.drawBitmap(bitmap, null, rectF.get(1), new Paint());

@@ -14,8 +14,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_1 = "ID";
     private static final String COL_2 = "TITLE";
     private static final String COL_3 = "ICON";
-    private static final String COL_4 = "DATETIME";
-    private static final String COL_5 = "DESCRIPTION";
+    private static final String COL_4 = "DATE";
+    private static final String COL_5 = "TIME";
+    private static final String COL_6 = "DESCRIPTION";
 
     public DatabaseHelper(@Nullable Context context) {
         super(context, DATABASE_NAME, null, 1);
@@ -27,7 +28,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + " (ID INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + " TITLE TEXT NOT NULL,"
                 + " ICON INTEGER,"
-                + " DATETIME TEXT NOT NULL,"
+                + " DATE TEXT NOT NULL,"
+                + " TIME TEXT NOT NULL,"
                 + " DESCRIPTION TEXT)"
         );
     }
@@ -43,8 +45,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_2, title);
         contentValues.put(COL_3, icon);
-        contentValues.put(COL_4, datetime);
-        contentValues.put(COL_5, description);
+        String[] datetimeStr = datetime.split(" ");
+        contentValues.put(COL_4, datetimeStr[0]);
+        contentValues.put(COL_5, datetimeStr[1]);
+        contentValues.put(COL_6, description);
         return db.insert(TABLE_NAME, null, contentValues) != -1;
     }
 }
