@@ -38,15 +38,13 @@ public class MainActivity extends FragmentActivity {
     // VARS
     private Boolean mCalendarMenuState = false;
     private Integer mYear, mMonth, mDay;
-    private ArrayList<Integer> mPlanIcons = new ArrayList<>();
-    private ArrayList<String> mPlanDescriptions = new ArrayList<>();
 
     // Widgets
-
     private CalendarView mCalendar;
     private Button mUserMenu;
     private Button mEventButton;
     private Button mCalenderMenu;
+    private RecyclerViewAdapter mRecyclerViewAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +83,13 @@ public class MainActivity extends FragmentActivity {
         // 用户已经登录，跳转到主界面
         }else {
             setContentView(R.layout.activity_main);
+
+            //初始化时间
+            Calendar sysCalendar = Calendar.getInstance();
+            mYear = sysCalendar.get(Calendar.YEAR);
+            mMonth = sysCalendar.get(Calendar.MONTH);
+            mDay = sysCalendar.get(Calendar.DAY_OF_MONTH);
+
             init_calender();
 
             mCalendar = findViewById(R.id.calendar);
@@ -92,11 +97,6 @@ public class MainActivity extends FragmentActivity {
             mEventButton = findViewById(R.id.calendarAddEvent);
             mCalenderMenu = findViewById(R.id.calendarMenuButton);
 
-            //初始化时间
-            Calendar sysCalendar = Calendar.getInstance();
-            mYear = sysCalendar.get(Calendar.YEAR);
-            mMonth = sysCalendar.get(Calendar.MONTH);
-            mDay = sysCalendar.get(Calendar.DAY_OF_MONTH);
             //日历选择事件
             mCalendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
                 @Override
@@ -104,6 +104,7 @@ public class MainActivity extends FragmentActivity {
                     mYear = year;
                     mMonth = month;
                     mDay = day;
+                    mRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay);
                 }
             });
 
@@ -150,9 +151,10 @@ public class MainActivity extends FragmentActivity {
 
     private void init_calender(){
         RecyclerView recyclerView = findViewById(R.id.dateDetailRecycler);
-        RecyclerViewAdapter adapter = new RecyclerViewAdapter(this, mPlanDescriptions, mPlanIcons);
-        recyclerView.setAdapter(adapter);
+        mRecyclerViewAdapter = new RecyclerViewAdapter(this);
+        recyclerView.setAdapter(mRecyclerViewAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay);
     }
 
     @Override
@@ -160,6 +162,8 @@ public class MainActivity extends FragmentActivity {
         super.onResume();
         if (mApplication.hasNewPlan()) {
             mCalendar.invalidate();
+            String datetime = (String) mApplication.getNewPlan().get(2);
+            mRecyclerViewAdapter.update(mDatabaseHelper, datetime.split(" ")[0]);
         }
         Log.d(TAG, "on resume start");
     }

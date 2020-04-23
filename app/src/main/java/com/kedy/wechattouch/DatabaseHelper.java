@@ -5,9 +5,15 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.drawable.Icon;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "DatabaseHelper";
@@ -46,8 +52,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COL_2, title);
         contentValues.put(COL_3, icon);
         String[] datetimeStr = datetime.split(" ");
-        String[] date = datetimeStr[0].split("-");
-        contentValues.put(COL_4, date[0] + "-" + (Integer.parseInt(date[1]) - 1) + "-" + (Integer.parseInt(date[2]) - 1));
+        contentValues.put(COL_4, datetimeStr[0]);
         contentValues.put(COL_5, datetimeStr[1]);
         contentValues.put(COL_6, description);
         return db.insert(TABLE_NAME, null, contentValues) != -1;
@@ -74,22 +79,36 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    void checkTable() {
+    public Map<String, List> getDayPlans(String date) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from " + TABLE_NAME, null);
-        Log.d(TAG, "检查");
 
-        for (int i = 0; i < cursor.getCount(); i++){
-            cursor.moveToNext();
-            int c1 = cursor.getInt(0);
-            String c2 = cursor.getString(1);
-            int c3 = cursor.getInt(2);
-            String c4 = cursor.getString(3);
-            String c5 = cursor.getString(4);
-            String c6 = cursor.getString(5);
+        String query = "SELECT * ";
+        query += " FROM " + TABLE_NAME;
+        query += " WHERE " + COL_4 + "='" + date;
+        query += "' ORDER BY " + COL_5;
 
-            Log.d(TAG, c1 + " " + c2 + " " + c3 + " " + c4 + " " + c5 + " " + c6);
+        Cursor cursor = db.rawQuery(query, null);
+
+        List<String> TitleList = new ArrayList<>();
+        List<Integer> IconList = new ArrayList<>();
+        List<String> TimeList = new ArrayList<>();
+        List<String> DescriptionList = new ArrayList<>();
+
+        while (cursor.moveToNext()){
+            TitleList.add(cursor.getString(1));
+            IconList.add(cursor.getInt(2));
+            TimeList.add(cursor.getString(4));
+            DescriptionList.add(cursor.getString(5));
         }
         cursor.close();
+
+        Map<String, List> result = new HashMap<>();
+
+        result.put("Titles", TitleList);
+        result.put("Icons", IconList);
+        result.put("Times", TimeList);
+        result.put("Descriptions", DescriptionList);
+
+        return result;
     }
 }

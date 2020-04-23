@@ -14,26 +14,27 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     private static final String TAG = "RecyclerViewAdapter";
 
-    private ArrayList<String> mPlanDescriptions = new ArrayList<>();
-    private ArrayList<Integer> mPlanIcon = new ArrayList<>();
+    private ArrayList<String> mPlanTitles;
+    private ArrayList<Integer> mPlanIcon;
     private Context mContext;
 
-    public RecyclerViewAdapter(Context context, ArrayList<String> planDescriptions, ArrayList<Integer> planIcon) {
+    public RecyclerViewAdapter(Context context) {
         mContext = context;
-        mPlanDescriptions = planDescriptions;
-        mPlanIcon = planIcon;
+        mPlanTitles = new ArrayList<>();
+        mPlanIcon = new ArrayList<>();
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.date_detail_item, parent, false);
-        ViewHolder holder = new ViewHolder(view);
-        return holder;
+        return new ViewHolder(view);
     }
 
     @Override
@@ -41,33 +42,55 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         Log.d(TAG, "onBindViewHolder: called.");
 
         holder.plan_icon.setImageResource(mPlanIcon.get(position));
-        holder.plan_description.setText(mPlanDescriptions.get(position));
+        holder.plan_title.setText(mPlanTitles.get(position));
 
         holder.item.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: clicked on: " + mPlanDescriptions.get(position));
+                Log.d(TAG, "onClick: clicked on: " + mPlanTitles.get(position));
 
-                Toast.makeText(mContext, mPlanDescriptions.get(position), Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, mPlanTitles.get(position), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return mPlanDescriptions.size();
+        return mPlanTitles.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    void update(DatabaseHelper dbHelper, String dateStr) {
+        mPlanIcon.clear();
+        mPlanTitles.clear();
+
+        Map<String, List> plans = dbHelper.getDayPlans(dateStr);
+
+        List TitleList = plans.get("Titles");
+        List IconList = plans.get("Icons");
+        List TimeList = plans.get("Times");
+        List DescriptionList = plans.get("Descriptions");
+
+        assert TitleList != null;
+        assert IconList != null;
+        assert TimeList != null;
+        assert DescriptionList != null;
+        for (int i = 0; i < TitleList.size(); i++) {
+            mPlanIcon.add((Integer) IconList.get(i));
+            mPlanTitles.add((String) TitleList.get(i));
+        }
+        notifyDataSetChanged();
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
 
         ImageView plan_icon;
-        TextView plan_description;
+        TextView plan_title;
         RelativeLayout item;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             plan_icon = itemView.findViewById(R.id.planIcon);
-            plan_description = itemView.findViewById(R.id.planDescription);
+            plan_title = itemView.findViewById(R.id.planTitle);
             item = itemView.findViewById(R.id.dateDetailItem);
         }
     }

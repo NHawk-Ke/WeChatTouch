@@ -53,13 +53,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@id/calendar"
+                android:background="@drawable/date_detail_background"
                 android:orientation="vertical">
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/dateDetailRecycler"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/date_detail_background" />
+                    android:layout_marginTop="30dp"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginLeft="30dp" />
 
             </LinearLayout>
 

@@ -76,11 +76,14 @@ public class AddPlanPopup extends Activity {
 
                 Map<String, Object> selectedIcon = (Map<String, Object>) mIconSpinner.getSelectedItem();
                 int iconID = (int) selectedIcon.get("icon");
-                String datetime = mPlanTime.getText().toString();
+                String[] datetime = mPlanTime.getText().toString().split(" ");
+                String[] date = datetime[0].split("-");
+                int month = Integer.parseInt(date[1]);
+                int day = Integer.parseInt(date[2]);
+                String datetimeStr = date[0] + "-" + (month - 1) + "-" + (day - 1) + " " + datetime[1];
                 String description = mPlanDescription.getText().toString();
-                mApplication.setPlan(title, iconID, datetime, description);
-                mDatabaseHelper.insert(title, iconID, datetime, description);
-                mDatabaseHelper.checkTable();
+                mApplication.setPlan(title, iconID, datetimeStr, description);
+                mDatabaseHelper.insert(title, iconID, datetimeStr, description);
 
                 finish();
             }
