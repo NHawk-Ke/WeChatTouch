@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public class WeChatTouchApplication extends Application {
-    private Integer insertedPlanId = -1;
-
     private List<Map<String, Object>> icons = null;
 
     // Newly added plan
@@ -17,14 +15,6 @@ public class WeChatTouchApplication extends Application {
     private int planIconID;
     private String planDatetime;
     private String planDescription;
-
-    public Integer getInsertedPlanId() {
-        return insertedPlanId;
-    }
-
-    public void setInsertedPlanId(Integer id) {
-        insertedPlanId = id;
-    }
 
     public List<Map<String, Object>> getIcons() {
         return icons;

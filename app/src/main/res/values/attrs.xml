@@ -13,6 +13,7 @@
         <attr name="mTitleTextSize" format="dimension" />        <!--标题字体大小-->
         <attr name="mWeekTextSize" format="dimension" />         <!--星期字体大小-->
         <attr name="mDayTextSize" format="dimension" />          <!--日期字体大小-->
+        <attr name="mDayStatusTextSize" format="dimension" />    <!--任务字体大小-->
 
         <attr name="mTitleArrowLeft" format="reference" />       <!--月份箭头-->
         <attr name="mTitleArrowRight" format="reference" />      <!--月份箭头-->
@@ -26,6 +27,6 @@
 
         <attr name="mTitleSpace" format="dimension" />           <!--标题月份上下间隔-->
         <attr name="mDaySpace" format="dimension" />             <!--日期行间距-->
-        <attr name="mTextSpac" format="dimension" />             <!--日期和任务次数字体上下间距-->
+        <attr name="mTextSpace" format="dimension" />             <!--日期和任务次数字体上下间距-->
     </declare-styleable>
 </resources>

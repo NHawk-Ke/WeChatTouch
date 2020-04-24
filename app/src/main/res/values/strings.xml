@@ -12,6 +12,10 @@
     <!-- String used for activity_main -->
     <string name="date_detail_placeholder">预定计划</string>
 
+    <!-- String used for plan popup -->
+    <string name="popup_plan_time">时间:</string>
+    <string name="popup_plan_description">详情:</string>
+
     <!-- String used for adding plans -->
     <string name="plan_title">计划名称</string>
     <string name="plan_icon">提醒图标</string>
@@ -19,6 +23,8 @@
     <string name="plan_time">提醒时间</string>
     <string name="plan_description">计划详情</string>
     <string name="plan_create">创建计划</string>
+    <string name="plan_unchecked_text">预定计划:</string>
+    <string name="plan_checked_text">完成计划:</string>
 
     <!-- String used for icons -->
     <string name="ic_alarm">闹钟</string>

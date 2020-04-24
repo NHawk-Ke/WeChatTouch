@@ -2,25 +2,25 @@ package com.kedy.wechattouch;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.kedy.wechattouch.calendarlibrary.CalendarView;
+import com.noober.menu.FloatMenu;
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
-import com.kedy.wechattouch.calendarlibrary.CalendarView;
-
-import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MainActivity extends FragmentActivity {
@@ -38,21 +38,32 @@ public class MainActivity extends FragmentActivity {
     // VARS
     private Boolean mCalendarMenuState = false;
     private Integer mYear, mMonth, mDay;
+    private float mScale;
+    private int mMaxRecyclerViewHeight;
+
+    // FloatMenu 第三方菜单
+    private Point mPoint = new Point();
+    private int mClickedPosition;
 
     // Widgets
     private CalendarView mCalendar;
     private Button mUserMenu;
     private Button mEventButton;
     private Button mCalenderMenu;
-    private RecyclerViewAdapter mRecyclerViewAdapter;
+    private RecyclerView mUncheckedRecyclerView;
+    private RecyclerViewAdapter mUncheckedRecyclerViewAdapter;
+    private TextView mCheckedRecyclerViewText;
+    private RecyclerViewAdapter mCheckedRecyclerViewAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "on Create: started");
         mUserPreferences = getSharedPreferences("userSharedPreferences", MODE_PRIVATE);
         mDatabaseHelper = new DatabaseHelper(this);
         mApplication = (WeChatTouchApplication) this.getApplication();
+        // 最大高度为4个icon
+        mScale = getResources().getDisplayMetrics().density;
+        mMaxRecyclerViewHeight = (int) (mScale * 180f + 0.5);
 
         //如果用户还没有登录
         if (!mUserPreferences.getString("unionid", "").equals("")) {
@@ -104,7 +115,14 @@ public class MainActivity extends FragmentActivity {
                     mYear = year;
                     mMonth = month;
                     mDay = day;
-                    mRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay);
+                    mUncheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "0");
+                    mUncheckedRecyclerView.getLayoutParams().height = Math.min((int) (mScale * 40f * mUncheckedRecyclerViewAdapter.getItemCount() + 0.5), mMaxRecyclerViewHeight);
+                    mCheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "1");
+                    if (mCheckedRecyclerViewAdapter.getItemCount() > 0) {
+                        mCheckedRecyclerViewText.setVisibility(View.VISIBLE);
+                    }else {
+                        mCheckedRecyclerViewText.setVisibility(View.INVISIBLE);
+                    }
                 }
             });
 
@@ -150,11 +168,87 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void init_calender(){
-        RecyclerView recyclerView = findViewById(R.id.dateDetailRecycler);
-        mRecyclerViewAdapter = new RecyclerViewAdapter(this);
-        recyclerView.setAdapter(mRecyclerViewAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay);
+        mUncheckedRecyclerView = findViewById(R.id.uncheckedDateDetailRecycler);
+        mUncheckedRecyclerViewAdapter = new RecyclerViewAdapter();
+        mUncheckedRecyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                String[] info = mUncheckedRecyclerViewAdapter.getPlanTimeAndDescription(position);
+                DateDetailDisplayPopup popup = new DateDetailDisplayPopup(MainActivity.this);
+                popup.show(mPoint, mYear + "年" + (mMonth + 1) + "月" + (mDay + 1) + "日 " + info[0], info[1]);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+                mClickedPosition = position;
+                FloatMenu floatMenu = new FloatMenu(MainActivity.this);
+                floatMenu.items("完成", "删除");
+                floatMenu.setOnItemClickListener(new FloatMenu.OnItemClickListener() {
+                    @Override
+                    public void onClick(View v, int position) {
+                        if (position == 1)
+                            mUncheckedRecyclerViewAdapter.deletePlan(mDatabaseHelper, mClickedPosition);
+                        else {
+                            mUncheckedRecyclerViewAdapter.setStatus(mDatabaseHelper, mClickedPosition, 1);
+                            mUncheckedRecyclerView.getLayoutParams().height = Math.min((int) (mScale * 40f * mUncheckedRecyclerViewAdapter.getItemCount() + 0.5), mMaxRecyclerViewHeight);
+                            mCheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "1");
+                            if (mCheckedRecyclerViewAdapter.getItemCount() > 0)
+                                mCheckedRecyclerViewText.setVisibility(View.INVISIBLE);
+                        }
+                        mCalendar.invalidate();
+                    }
+                });
+                floatMenu.show(mPoint);
+            }
+        });
+        mUncheckedRecyclerView.setAdapter(mUncheckedRecyclerViewAdapter);
+        mUncheckedRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mUncheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "0");
+        mUncheckedRecyclerView.getLayoutParams().height = Math.min((int) (mScale * 40f * mUncheckedRecyclerViewAdapter.getItemCount() + 0.5), mMaxRecyclerViewHeight);
+
+        mCheckedRecyclerViewText = findViewById(R.id.checkedDateDetailRecyclerText);
+        RecyclerView mCheckedRecyclerView = findViewById(R.id.checkedDateDetailRecycler);
+        mCheckedRecyclerViewAdapter = new RecyclerViewAdapter();
+        mCheckedRecyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                String[] info = mCheckedRecyclerViewAdapter.getPlanTimeAndDescription(position);
+                DateDetailDisplayPopup popup = new DateDetailDisplayPopup(MainActivity.this);
+                popup.show(mPoint, mYear + "年" + (mMonth + 1) + "月" + (mDay + 1) + "日 " + info[0], info[1]);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+                mClickedPosition = position;
+                FloatMenu floatMenu = new FloatMenu(MainActivity.this);
+                floatMenu.items("未完成", "删除");
+                floatMenu.setOnItemClickListener(new FloatMenu.OnItemClickListener() {
+                    @Override
+                    public void onClick(View v, int position) {
+                        if (position == 1)
+                            mCheckedRecyclerViewAdapter.deletePlan(mDatabaseHelper, mClickedPosition);
+                        else {
+                            mCheckedRecyclerViewAdapter.setStatus(mDatabaseHelper, mClickedPosition, position);
+                            mUncheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "0");
+                            mUncheckedRecyclerView.getLayoutParams().height = Math.min((int) (mScale * 40f * mUncheckedRecyclerViewAdapter.getItemCount() + 0.5), mMaxRecyclerViewHeight);
+                            if (mCheckedRecyclerViewAdapter.getItemCount() == 0) {
+                                mCheckedRecyclerViewText.setVisibility(View.INVISIBLE);
+                            }
+                        }
+                        mCalendar.invalidate();
+                    }
+                });
+                floatMenu.show(mPoint);
+            }
+        });
+        mCheckedRecyclerView.setAdapter(mCheckedRecyclerViewAdapter);
+        mCheckedRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mCheckedRecyclerViewAdapter.update(mDatabaseHelper, mYear + "-" + mMonth + "-" + mDay, "1");
+        if (mCheckedRecyclerViewAdapter.getItemCount() > 0) {
+            mCheckedRecyclerViewText.setVisibility(View.VISIBLE);
+        }else {
+            mCheckedRecyclerViewText.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -162,16 +256,31 @@ public class MainActivity extends FragmentActivity {
         super.onResume();
         if (mApplication.hasNewPlan()) {
             mCalendar.invalidate();
-            String datetime = (String) mApplication.getNewPlan().get(2);
-            mRecyclerViewAdapter.update(mDatabaseHelper, datetime.split(" ")[0]);
+            String[] datetime = ((String) mApplication.getNewPlan().get(2)).split(" ");
+            if (!datetime[0].equals(mYear + "-" + mMonth + "-" + mDay))
+                return;
+            mUncheckedRecyclerViewAdapter.update(mDatabaseHelper, datetime[0], "0");
+            mUncheckedRecyclerView.getLayoutParams().height = Math.min((int) (mScale * 40f * mUncheckedRecyclerViewAdapter.getItemCount() + 0.5), mMaxRecyclerViewHeight);
+            mCheckedRecyclerViewAdapter.update(mDatabaseHelper, datetime[0], "1");
+            if (mCheckedRecyclerViewAdapter.getItemCount() > 0) {
+                mCheckedRecyclerViewText.setVisibility(View.VISIBLE);
+            }else {
+                mCheckedRecyclerViewText.setVisibility(View.INVISIBLE);
+            }
         }
-        Log.d(TAG, "on resume start");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "on pause start");
+    }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if(ev.getAction() == MotionEvent.ACTION_DOWN){
+            mPoint.x = (int) ev.getRawX();
+            mPoint.y = (int) ev.getRawY();
+        }
+        return super.dispatchTouchEvent(ev);
     }
 }

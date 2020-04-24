@@ -51,6 +51,9 @@ dependencies {
     // OKHTTP3用作抓取微信access token去获取用户信息
     implementation 'com.squareup.okhttp3:okhttp:4.5.0'
 
+    // FloatMenu 第三方长按菜单
+    implementation 'com.noober.floatmenu:common:1.0.4'
+
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'

@@ -11,7 +11,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -57,6 +56,7 @@ public class CalendarView extends View {
     private int mDayHeight;
     /** 任务图标的大小*/
     private int mIconSize;
+    private int mDayStatusTextSize;
     /** 选中的日期的颜色*/
     private int mSelectedYear;
     private int mSelectedMonth;
@@ -182,7 +182,6 @@ public class CalendarView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mIsScrolling || mIsDrawing) {
-            Log.d(TAG, "onTouchEvent: cannot touch");
             return false;
         }
         mVelocityTracker.addMovement(event);
@@ -197,7 +196,6 @@ public class CalendarView extends View {
                 handleUp(event);
                 break;
             default:
-                Log.d(TAG, "onTouchEvent: unknown event Action = " + event.getAction());
         }
         return true;
     }
@@ -209,7 +207,6 @@ public class CalendarView extends View {
         int[] maxDp = mCalendarUtils.setScale(context.getResources().getDisplayMetrics());
         mMaxWidthDp = maxDp[0];
         mMaxHeightDp = maxDp[1];
-        Log.d(TAG, "maxWidthDp: " + mMaxWidthDp + " maxHeightDp: " + mMaxHeightDp);
 
         initAttrs(attrs, defStyleAttr);
 
@@ -246,6 +243,7 @@ public class CalendarView extends View {
         mTitleTextSize = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTitleTextSize, 25));
         mWeekTextSize = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTitleTextSize, 15));
         mDayTextSize = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDayTextSize, 15));
+        mDayStatusTextSize = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDayStatusTextSize, 10));
 
         mTitleArrowLeft = a.getResourceId(R.styleable.CalendarView_mTitleArrowLeft, R.drawable.calendar_arrow_left);
         mTitleArrowRight = a.getResourceId(R.styleable.CalendarView_mTitleArrowRight, R.drawable.calendar_arrow_right);
@@ -258,8 +256,8 @@ public class CalendarView extends View {
         mStrokeWidth = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mStrokeWidth, 1));
 
         mTitleSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTitleSpace, 5));
-        mDaySpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDaySpace, 2));
-        mTextSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTextSpac, 0));
+        mDaySpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mDaySpace, 10));
+        mTextSpace = mCalendarUtils.dip2px(a.getDimension(R.styleable.CalendarView_mTextSpace, 0));
         a.recycle();  //注意回收
     }
 
@@ -461,6 +459,7 @@ public class CalendarView extends View {
     private void drawWeek(Canvas canvas) {
         String[] WEEK_STR = new String[]{"日", "一", "二", "三", "四", "五", "六"};
         mTextPaint.setColor(mWeekTextColor);
+        mTextPaint.setTextSize(mWeekTextSize);
         for (int index = 0; index < CalendarUtils.NUM_COL; index++) {
             RectF rectF = mWeekRectFs.get(index);
 
@@ -470,7 +469,6 @@ public class CalendarView extends View {
 //            mStrokePaint.setColor(Color.RED);
 //            canvas.drawRect(rectF, mStrokePaint);
 
-            mTextPaint.setTextSize(mWeekTextSize);
             canvas.drawText(WEEK_STR[index], rectF.centerX(),
                     mTitleHeight + getFontLeading(mTextPaint), mTextPaint);
         }
@@ -542,6 +540,15 @@ public class CalendarView extends View {
         canvas.drawText(String.valueOf(dayBox.getDay() + 1),
                 dayBox.getRectF().centerX(),
                 dayBox.getRectF().top + mDaySpace + getFontLeading(mTextPaint), mTextPaint);
+
+        //画任务状态
+        int [] planStatus = mDatabaseHelper.getPlanStatus(dayBox.getDateStr());
+        mTextPaint.setTextSize(mDayStatusTextSize);
+        mTextPaint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawText(planStatus[0] + "/" + planStatus[1],
+                dayBox.getRectF().right,
+                dayBox.getRectF().top + getFontLeading(mTextPaint), mTextPaint);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
     }
 
     /**
